@@ -10,7 +10,7 @@ use defmt_rtt as _;
 use embedded_hal::digital::v2::{InputPin, OutputPin};
 use panic_probe as _;
 
-use rp_pico as bsp;
+use ae_rp2040 as bsp;
 
 use bsp::hal::{
     clocks::{init_clocks_and_plls, Clock},
@@ -41,8 +41,6 @@ fn main() -> ! {
     .ok()
     .unwrap();
 
-    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
-
     let pins = bsp::Pins::new(
         pac.IO_BANK0,
         pac.PADS_BANK0,
@@ -50,9 +48,10 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
-    let mut led_pin = pins.led.into_push_pull_output();
-    let btn = pins.gpio14.into_pull_up_input();
-
+    // GPIO23を通電させている間、GPIO14のLEDを発行させる
+    // GPIO23はBSPをいじっているため確認
+    let mut led_pin = pins.gpio14.into_push_pull_output();
+    let btn = pins.gpio23.into_pull_up_input();
     loop {
         if btn.is_low().unwrap() {
             led_pin.set_high().unwrap();
@@ -61,6 +60,9 @@ fn main() -> ! {
         }
     }
 
+    // // GPIO14を使ったLチカ
+    // let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
+    // let mut led_pin = pins.gpio14.into_push_pull_output();
     // loop {
     //     info!("on!");
     //     led_pin.set_high().unwrap();
